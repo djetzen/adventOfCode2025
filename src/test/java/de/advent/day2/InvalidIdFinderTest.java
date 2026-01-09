@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.stream.LongStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -84,4 +85,63 @@ class InvalidIdFinderTest {
         }
     }
 
+    @Nested
+    class ComplexChecks {
+
+        @Test
+        void noDuplicateIsValid() {
+            var isInvalid = invalidIdFinder.isIdInvalidComplexCheck(1234567890L);
+            assertThat(isInvalid).isFalse();
+        }
+
+        @Test
+        void simpleDuplicateIsValid() {
+            var isInvalid = invalidIdFinder.isIdInvalidComplexCheck(123321L);
+            assertThat(isInvalid).isFalse();
+        }
+
+        @Test
+        void duplicateAtEndIsValid() {
+            var isInvalid = invalidIdFinder.isIdInvalidComplexCheck(1821212121L);
+            assertThat(isInvalid).isFalse();
+        }
+
+        @Test
+        void duplicateAtStartIsValid() {
+            var isInvalid = invalidIdFinder.isIdInvalidComplexCheck(2121212118L);
+            assertThat(isInvalid).isFalse();
+        }
+
+        @Test
+        void completeDuplicateIsInvalid() {
+            var isInvalid = invalidIdFinder.isIdInvalidComplexCheck(456456L);
+            assertThat(isInvalid).isTrue();
+        }
+
+        @Test
+        void validNumbers_areValidInComplexCheck() {
+            //2121212118-2121212124
+            for (var i : LongStream.range(2121212118, 2121212125).toArray()) {
+                System.out.println(i + ": " + invalidIdFinder.isIdInvalidComplexCheck(i));
+            }
+        }
+
+        @Test
+        void secondPart_solution() throws IOException {
+            var invalidSum = 0L;
+            var numberFinder = new NumberFinder();
+            var invalidIdFinder = new InvalidIdFinder();
+            var idRanges = Files.readString(Paths.get("src/test/resources/day2/input-first-part.txt")).split(",");
+            for (var idRange : idRanges) {
+                var range = idRange.split("-");
+                var ids = numberFinder.numbersInRange(range[0].trim(), range[1].trim());
+                for (var id : ids) {
+                    if (invalidIdFinder.isIdInvalidComplexCheck(id)) {
+                        invalidSum += id;
+                    }
+                }
+            }
+            assertThat(invalidSum).isEqualTo(38731915928L);
+        }
+    }
 }
